@@ -1,7 +1,9 @@
 #####
 # Work in progress 
 #####
-
+$vcenter  = vcsa.domain.com
+$vcuser   = "administrator@vsphere.local"
+$vcpass   = "password"
 $username = "pureuser"
 $password = "password"
 $endpoint = "10.10.12.34"
@@ -9,6 +11,8 @@ $podname  = "pod-dr"
 $cluster  = "clustername"
 $dsname   = "active-dr-ds1"
 
+# Connect to vCenter
+Connect-VIserver $vcenter -user $vcuser -password $vcpass
 
 # Promote the DR Site Pod
 $promote = "purepod promote $podname"
