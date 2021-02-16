@@ -1,4 +1,4 @@
-# Check to see if a current vCenter Server session is in place
+# Check to see if a current ESXi Server session is in place
 If ($Global:DefaultVIServer) {
     Write-Host "Connected to " -NoNewline 
     Write-Host $Global:DefaultVIServer -ForegroundColor Green
