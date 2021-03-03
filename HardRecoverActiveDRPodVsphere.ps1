@@ -26,33 +26,22 @@ do {
     $test = New-PfaCLICommand -EndPoint $endpoint -CommandText $podstatus -UserName $username -Password (ConvertTo-SecureString -AsPlainText $pureuser -Force)   
 } while ($test | select-string -pattern "promoting")
 
-# Put the hosts in a Cluster variable
-$VMHosts = Get-Cluster -Name $Cluster | Get-VMHost
+$VMHost = Get-VMhost | Select-Object -First 1
 
-Foreach($VMHost in $VMHosts){
+$EsxCli = Get-EsxCli -VMHost $VMhost -V2
 
-    # Unbound volumes on the current host
-    $ubvols = (Get-View (Get-VMhost -Name $VMhost | Get-View).ConfigManager.DatastoreSystem).QueryUnresolvedVmfsVolumes()
+$Snaps = $esxcli.storage.vmfs.snapshot.list.invoke()
 
-    foreach ($vol in $ubvols) {
-        $vmpaths = @()
-        $Extents = $vol.Extent;
-        foreach ($Extent in $Extents) {
-          $extPaths = $extPaths + $Extent.DevicePath
-         }      
-        $resolutionSpec = New-Object VMware.Vim.HostUnresolvedVmfsResolutionSpec[] (1)
-        $resolutionSpec[0] = New-Object VMware.Vim.HostUnresolvedVmfsResolutionSpec
-        $resolutionSpec[0].extentDevicePath = New-Object System.String[] (1)
-        $resolutionSpec[0].extentDevicePath[0] = $extPaths
-        $resolutionSpec[0].uuidResolution = "forceMount"
-
-        $dsView = Get-View -Id (Get-View -Id (Get-VMhostStorage $VMhost).Id).MoRef
-        $dsView.ResolveMultipleUnresolvedVmfsVolumes($resolutionSpec)
+if ($Snaps.Count -gt 0) {
+    Foreach ($Snap in $Snaps) {
+        Write-Host "Snapshot Found: $($Snap.VolumeName)"
+        $esxcli.storage.vmfs.snapshot.resignature.invoke(@{volumelabel=$($Snap.VolumeName)})
     }
+} else {
+    Write-Host "No Snapshot volumes found"
 }
 
 $Datastore = Get-Datastore -Name $dsname
-$VMhost    = Get-Cluster | Get-VMhost | Select-Object -First 1
 $VMFolder  = Get-Folder -Type VM -Name "Discovered virtual machine"
 
 foreach($Datastore in $Datastore) {
