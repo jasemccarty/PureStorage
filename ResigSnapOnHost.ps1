@@ -7,9 +7,9 @@ If ($Global:DefaultVIServer) {
         return
     }
 } else {
-    Write-Host "Not connected to vCenter Server" -ForegroundColor Red
-    $VIFQDN = Read-Host "Please enter the vCenter Server FQDN"  
-    $VICredentials = Get-Credential -Message "Enter credentials for vCenter Server" 
+    Write-Host "Not connected to an ESXi host" -ForegroundColor Red
+    $VIFQDN = Read-Host "Please enter the ESXi host FQDN"  
+    $VICredentials = Get-Credential -Message "Enter credentials for the ESXi host" 
     try {
         Connect-VIServer -Server $VIFQDN -Credential $VICredentials -ErrorAction Stop | Out-Null
         Write-Host "Connected to $VIFQDN" -ForegroundColor Green 
