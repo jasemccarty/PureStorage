@@ -158,6 +158,11 @@ If ($Global:DefaultVIServer.Name -eq $SourceVcenter) {
     }
 }
 
+############################################################
+# Proceed with getting the VM's information so it can be   #
+# Made available on the target environment                 #
+############################################################
+
 # Get a Random Number so we can (mostly) guarantee a unique snapshot/VM name
 $Random = Get-Random -Maximum 10000
 
@@ -170,10 +175,12 @@ $SourceVolume = Get-PfaVolfromvmfs -Datastore $SourceDatastore -FlashArray $Sour
 # Create a snap name for the VM
 $VMSnapName = $VM.Name + "-" + $Random
 
+############################################################
+# Protection Group Logic                                   #
+# Get the source PG and target PG                          #
+############################################################
+
 # Get the Protection Group Associated with the Volume
-    # Old PureStoragePowerShellSDKv1 method, doesn't work on PowerShell Core (Win/Lin/Mac)
-# $ProtectionGroup = Get-PfaProtectionGroups -Array $SourceArray | Where-Object {$_.volumes -contains $SourceVolume.Name}
-    # RestAPI based method, using the PureStorage.FlashArray.VMware Module (supports PowerShell Core)
 $ProtectionGroup = New-PfaRestOperation -ResourceType pgroup -RestOperationType GET -Flasharray $SourceArray -SkipCertificateCheck | Where-Object {$_.volumes -contains $SourceVolume.Name}
 
 # Determine if the SourceFlashArray is an IP or a FQDN
@@ -188,29 +195,21 @@ catch {
 # Form the Snapshot source for the target array
 $PGroupName = $SourceName + ":" + $ProtectionGroup.name
 
-
 # Retrieve the ProtectionGroup on the Target Array
-    # Old PureStoragePowerShellSDKv1 method, doesn't work on PowerShell Core (Win/Lin/Mac)
-#$TargetPG = Get-PfaProtectionGroup -Array $TargetArray -Name $PGroupName
-    # RestAPI based method, using the PureStorage.FlashArray.VMware Module (supports PowerShell Core)
 $TargetPG = New-PfaRestOperation -ResourceType pgroup/$($PGroupName) -RestOperationType GET -Flasharray $TargetArray -SkipCertificateCheck  
 
+############################################################
+# Get the latest snapshot of the source datastore          #
+# and create a new volume from that snapshot.              #
+############################################################
+
 # Get the latest snapshot from the Source Array that contains the Source Volume
-    # Old PureStoragePowerShellSDKv1 method, doesn't work on PowerShell Core (Win/Lin/Mac)
-#$LatestSnap = Get-PfaProtectionGroupSnapshots -Array $TargetArray -Name $TargetPG.Name | Sort-Object Created -Descending | Select-Object -First 1
-    # RestAPI based method, using the PureStorage.FlashArray.VMware Module (supports PowerShell Core)
 $LatestSnap = New-PfaRestOperation -ResourceType volume -RestOperationType GET -Flasharray $TargetArray -SkipCertificateCheck -QueryFilter "?snap=true&pgrouplist=$($PGroupName)" | Where-Object {$_.source.split(":")[1] -in $SourceVolume.name} | Sort-Object Created -Descending | Select-Object -First 1
-#$LatestSnapVol = $LatestSnap.name
-#Write-Host "Latest Snap: $($LatestSnap)"
-#Write-Host "Latest Snap Name: $($LatestSnap.Name)"
 
 # Create the new volume name
 $NewVolumeName = $SourceVolume.name + "-snap-" + $Random
 
 # Create a new volume from the latest snapshot, overwrite if necessary
-    # Old PureStoragePowerShellSDKv1 method, doesn't work on PowerShell Core (Win/Lin/Mac)
-#New-PfaVolume -Array $TargetArray -VolumeName $NewVolumeName -Source $LatestSnapVol -Verbose
-    # RestAPI based method, using the PureStorage.FlashArray.VMware Module (supports PowerShell Core)
 New-PfaRestOperation -ResourceType volume/$($NewVolumeName) -RestOperationType POST -Flasharray $TargetArray -SkipCertificateCheck -jsonBody "{`"source`":`"$($LatestSnap.name)`",`"overwrite`":`"$true`"}"
 
 # Pause for a few seconds for the snap to take place
@@ -218,7 +217,6 @@ Start-Sleep -Seconds 5
 
 # Disconnect from the Source vCenter Server
 Disconnect-VIserver $Global:DefaultVIServer -Confirm:$false
-
 
 ##################################################################
 # Connected to the Target vCenter, prompt to use the same if the #
@@ -262,9 +260,6 @@ $NetworkPortGroup = Get-VirtualPortGroup -Name $TargetNetwork
 $TargetHostGroup = Get-PfaHostGroupfromVcCluster -Cluster (Get-Cluster -Name $TargetCluster) -Flasharray $TargetArray
 
 # Attach the snapped volume to the Target vCenter Cluster
-    # Old PureStoragePowerShellSDKv1 method, doesn't work on PowerShell Core (Win/Lin/Mac)
-#New-PfaHostGroupVolumeConnection -Array $TargetArray -HostGroupName $TargetHostGroup.name -VolumeName $NewVolumeName 
-    # RestAPI based method, using the PureStorage.FlashArray.VMware Module (supports PowerShell Core)
 New-PfaRestOperation -ResourceType hgroup/$($TargetHostGroup.name)/volume/$($NewVolumeName) -RestOperationType POST -Flasharray $TargetArray -SkipCertificateCheck  
 
 # Select 1 host in the Target vCenter Cluster
@@ -366,7 +361,6 @@ New-PfaRestOperation -ResourceType volume/$($NewVolumeName) -RestOperationType D
 # Disconnect from the Target vCenter Server and any others 
 Disconnect-VIserver * -Confirm:$false
 
-# Disconnect from the Source FlashArray
+# Disconnect from the Source & Target FlashArray
 Disconnect-PfaArray -Array $SourceArray
-# Disconnect from the Target FlashArray
 Disconnect-PfaArray -Array $TargetArray
