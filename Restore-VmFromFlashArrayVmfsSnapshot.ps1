@@ -11,16 +11,16 @@
 
 # Variables Section
 # Source Variables
-$SourceVcenter    = 'vc02.fsa.lab'                             # Source vCenter
-$SourceFlashArray = 'sn1-m70-f06-33.puretec.purestorage.com'   # Source FlashArray
-$SourceVM         = 'WINFILE2'
+$SourceVcenter    = 'vc1.fsa.lab'                              # Source vCenter
+$SourceFlashArray = 'array.domain.com'                         # Source FlashArray
+$SourceVM         = 'VMNAME'
 
 # Target Variables
-$TargetVcenter    = 'vc03.fsa.lab'                             # Target vCenter
-$TargetFlashArray = 'sn1-m70r2-f07-27.puretec.purestorage.com' # Target FlashArray
-$TargetDatastore  = 'sn1-m70r2-f07-27-vc03-ds01'               # Target Datastore to move VM to
+$TargetVcenter    = 'vc2.fsa.lab'                              # Target vCenter
+$TargetFlashArray = 'targetflasharray.purestorage.com'         # Target FlashArray
+$TargetDatastore  = 'targetdatastore'                          # Target Datastore to move VM to
 $TargetCluster    = 'cluster-dr'                               # Target Cluster for snapped VM
-$TargetNetwork    = 'vm-2234'                                  # Target Network for snapped VM
+$TargetNetwork    = 'targetnetwork'                            # Target Network for snapped VM
 $TargetVmFolder   = 'Discovered virtual machine'               # Target VM Folder for snapped VM
 
 
