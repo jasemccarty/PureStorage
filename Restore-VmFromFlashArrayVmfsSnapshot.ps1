@@ -23,7 +23,6 @@ $TargetCluster    = 'cluster-dr'                               # Target Cluster 
 $TargetNetwork    = 'targetnetwork'                            # Target Network for snapped VM
 $TargetVmFolder   = 'Discovered virtual machine'               # Target VM Folder for snapped VM
 
-
 ###########################################################
 # It should not be necessary to make any changes below    #
 ###########################################################
@@ -84,7 +83,6 @@ If ($SourceArray) {
         write-host $Error
         write-host "Terminating Script" -BackgroundColor Red
         $ConnectSourceFA = $False
-
         return
     }
 }
@@ -121,7 +119,6 @@ If ($TargetArray) {
         write-host $Error
         write-host "Terminating Script" -BackgroundColor Red
         $ConnectTargetFA = $False
-
         return
     }
 }
