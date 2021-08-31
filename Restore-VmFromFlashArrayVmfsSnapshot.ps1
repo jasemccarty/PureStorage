@@ -342,7 +342,10 @@ foreach($SearchResult in $SearchResults) {
         # Attach a specific network - Often networks are disconnected upon registration if previously connected to a VDS
         $item | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $NetworkPortGroup -Confirm:$false 
         # Storage vMotion the VM to the new datastore
-        $item | Move-VM -Datastore $TargetDS     
+        $item | Move-VM -Datastore $TargetDS
+        Do {
+            $VMItem = Get-Datastore  -Name $TargetDS | Get-VM -Name $item -ErrorAction SilentlyContinue
+        } While (-not $VMItem)
     }
 }
 
