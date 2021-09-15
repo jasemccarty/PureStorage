@@ -339,10 +339,14 @@ foreach($SearchResult in $SearchResults) {
     Foreach ($item in $NewVM) {
         # Remove any CD-ROM drives attached
         $item | Get-CDDrive | Set-CDDrive -NoMedia -Confirm:$false
+
         # Attach a specific network - Often networks are disconnected upon registration if previously connected to a VDS
         $item | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $NetworkPortGroup -Confirm:$false 
+
         # Storage vMotion the VM to the new datastore
         $item | Move-VM -Datastore $TargetDS
+
+        # Wait until the VM has been moved to the target datastore
         Do {
             $VMItem = Get-Datastore  -Name $TargetDS | Get-VM -Name $item -ErrorAction SilentlyContinue
         } While (-not $VMItem)
