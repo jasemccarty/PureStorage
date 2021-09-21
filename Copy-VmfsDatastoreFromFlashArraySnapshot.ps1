@@ -264,6 +264,7 @@ $VMFolder  = Get-Folder -Type VM -Name $TargetVmFolder
 # Rename the datastore
 Set-Datastore -Datastore $SnappedDatastore -Name $($NewDatastoreVolume.Name)
 
+# Register any .vmx found on the datastore in vSphere
 if ($RegisterVms -eq $true) {
 
     # Search for .VMX Files in datastore
