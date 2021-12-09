@@ -4,14 +4,13 @@ Created on: 12/08/2021
 Created by: Jase McCarty
 Github: http://www.github.com/jasemccarty
 Twitter: @jasemccarty
-Website: http://www.jasemccarty.com
 ===========================================================================
 .DESCRIPTION
 Copy RDMs and mount them to a new VM
 Powershell Core supported - Requires PowerCLI, PureStorage.FlashArray.VMware, & PureStoragePowerShellSDK (v1) modules.
 .SYNTAX
 Copy-RDMs-MountToVM.ps1 -vCenter <VCENTER> -FlashArray <FlashArray> -VM <VM> -SourceVolumes <SourceRDMs>
-
+.EXAMPLE
 Copy-RDMs-MountToVM.ps1 -vCenter vc02.fsa.lab -FlashArray sn1-m70-f06-33.puretec.purestorage.com -VM SQLVM -SourceVolumes 'RDMD','RDME','RDMF'
 #>
 
@@ -29,10 +28,10 @@ if (-Not $Vcenter)       { $Vcenter       = 'vc02.fsa.lab' }                    
 if (-Not $FlashArray)    { $FlashArray    = 'sn1-m70-f06-33.puretec.purestorage.com' }    # FlashArray
 if (-Not $VM)            { $VM            = 'SQLVM' }                                     # VM
 if (-Not $SourceVolumes) { $sourcevolumes = @('RDMD','RDME','RDMF') }                     # Source Volumes
+
 ###########################################################
 # It should not be necessary to make any changes below    #
 ###########################################################
-
 ###########################################################
 # Check for proper PowerShell modules installation        #
 ###########################################################
@@ -121,6 +120,7 @@ If ($DefaultFlashArray.EndPoint -eq $FlashArray) {
     return
     }
 }
+# Bulk of operations start here now that the PowerShell Modules have been confirmed loaded.
 
 # Informational
 Write-Host "Performing prep work"
@@ -193,4 +193,7 @@ If ($ConnectFA -eq $true) {
 # Disconnect from vCenter if we had to log into it
 If ($ConnectVc -eq $true) {
     Disconnect-VIserver -Server $Vcenter -Confirm:$False
+    # Informational
+    Write-Host "*********************************************************"
+    Write-Host "Disconnecting from $($Vcenter)"
 }
