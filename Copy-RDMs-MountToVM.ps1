@@ -120,7 +120,7 @@ If ($DefaultFlashArray.EndPoint -eq $FlashArray) {
     return
     }
 }
-# Bulk of operations start here now that the PowerShell Modules have been confirmed loaded.
+# Bulk of operations start here now that the PowerShell Modules have been confirmed loaded & we've connected to vCenter & FlashArray
 
 # Informational
 Write-Host "Performing prep work"
