@@ -145,7 +145,7 @@ If ($LocalSnapshot -eq $true) {
 $ProtectionGroup = New-PfaRestOperation -ResourceType pgroup -RestOperationType GET -Flasharray $DefaultFlashArray -SkipCertificateCheck | Where-Object {$_.volumes -Like $SourceVolume}
 
 # If the number of snapshots isn't specified, return the latest snapshot, otherwise allow the choice of a snapshot to be selected
-If ($SourceSnapCount -le "2") {
+If ($SourceSnapCount -le "1") {
     # Get the $SourceSnapCount latest snapshots from the protection group
     $LatestSnap = New-PfaRestOperation -ResourceType volume -RestOperationType GET -Flasharray $DefaultFlashArray -SkipCertificateCheck -QueryFilter "?snap=true&pgrouplist=$($ProtectionGroup.name)" | Where-Object {$_.name -Like "*"+$SourceVolumeName} | Sort-Object Created -Descending | Select-Object -First 1
     # Get the name of the latest snapshot 
