@@ -26,6 +26,8 @@ Function Get-PureVmHostRecommendations
         RuleType         : iops
         RuleOptions      : iops=1
         MaxIORecommended : 32767
+        LimitType        : Default
+        IOPLimit         : 1
 
         VMHost           : esxi02.fqdn
         HostVersion      : 6.7.0
@@ -33,6 +35,9 @@ Function Get-PureVmHostRecommendations
         RuleType         : iops
         RuleOptions      : iops=1
         MaxIORecommended : 32767
+        LimitType        : Default
+        IOPLimit         : 1
+
 
         Returns the Host info & recommendations for all ESXi hosts in the $VMhosts variable
     .EXAMPLE
@@ -122,7 +127,7 @@ Function Get-PureVmHostRecommendations
     END
     {
     }
-} #End Function Get-PureVmHostBasics
+} #End Function Get-PureVmHostRecommendations
 
 Function Get-PureVmHostMaxIOSize 
 {
