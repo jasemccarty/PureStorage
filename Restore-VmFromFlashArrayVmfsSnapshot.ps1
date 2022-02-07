@@ -11,16 +11,16 @@
 
 # Variables Section
 # Source Variables
-$SourceVcenter    = 'vc1.fsa.lab'                              # Source vCenter
-$SourceFlashArray = 'array.domain.com'                         # Source FlashArray
-$SourceVM         = 'VMNAME'
+$SourceVcenter    = 'vc02.fsa.lab'                              # Source vCenter
+$SourceFlashArray = 'sn1-m70-f06-33.puretec.purestorage.com'    # Source FlashArray
+$SourceVM         = 'JVRO'
 
 # Target Variables
-$TargetVcenter    = 'vc2.fsa.lab'                              # Target vCenter
-$TargetFlashArray = 'targetflasharray.purestorage.com'         # Target FlashArray
-$TargetDatastore  = 'targetdatastore'                          # Target Datastore to move VM to
+$TargetVcenter    = 'vc03.fsa.lab'                             # Target vCenter
+$TargetFlashArray = 'sn1-m70r2-f07-27.puretec.purestorage.com' # Target FlashArray
+$TargetDatastore  = 'sn1-m70-f06-33-vc03-ds01'                 # Target Datastore to move VM to
 $TargetCluster    = 'cluster-dr'                               # Target Cluster for snapped VM
-$TargetNetwork    = 'targetnetwork'                            # Target Network for snapped VM
+$TargetNetwork    = 'mgmt-untagged'                            # Target Network for snapped VM
 $TargetVmFolder   = 'Discovered virtual machine'               # Target VM Folder for snapped VM
 
 ###########################################################
@@ -35,12 +35,12 @@ $TargetVmFolder   = 'Discovered virtual machine'               # Target VM Folde
 $PowerCLIVersion = Get-Module -Name VMware.PowerCLI -ListAvailable | Select-Object -Property Version
 
 # If the PowerCLI Version is not v10 or higher, recommend that the user install PowerCLI 10 or higher
-If ($PowerCLIVersion.Version.Major -ge "10") {
-    Write-Host "PowerCLI version 10 or higher present, " -NoNewLine
+If ($PowerCLIVersion.Version.Major -ge "12") {
+    Write-Host "PowerCLI version 12 or higher present, " -NoNewLine
     Write-Host "proceeding" -ForegroundColor Green 
 } else {
     Write-Host "PowerCLI version could not be determined or is less than version 10" -Foregroundcolor Red
-    Write-Host "Please install PowerCLI 10 or higher and rerun this script" -Foregroundcolor Yellow
+    Write-Host "Please install PowerCLI 12 or higher and rerun this script" -Foregroundcolor Yellow
     Write-Host " "
     exit
 }
@@ -325,31 +325,39 @@ $SearchResults = $dsBrowser.SearchDatastoreSubFolders($DatastorePath,$SearchSpec
 $TargetDS = Get-Datastore -Name $TargetDatastore
 
 # Register the .VMX file with vCenter
-foreach($SearchResult in $SearchResults) {
+$SearchResults | Foreach-Object {
     # Register the snappshotted VM
-    New-VM -VMFilePath $SearchResult -VMHost $VMHost -Location $VMFolder -Name $VMSnapName -RunAsync -ErrorAction SilentlyContinue
+    $NewVM = New-VM -VMFilePath $_ -VMHost $VMHost -Location $VMFolder -Name $VMSnapName -RunAsync -ErrorAction SilentlyContinue
 
-    Write-Host "NewVM: $($NewVM)"
-
+    Start-Sleep -Seconds 10
     # Get any VM's on the snapshotted datastore
-    $NewVM = $SnappedDatastore | Get-VM
+    $NewVM = Get-Datastore -Name $SnappedDatastore | Get-VM
+
+    Write-Host $NewVM
+
+    Write-Host $SnappedDatastore
 
     Start-Sleep -Seconds 2
-    # Move each VM registered on the snappshotted datastore to the Target Datastore
-    Foreach ($item in $NewVM) {
-        # Remove any CD-ROM drives attached
-        $item | Get-CDDrive | Set-CDDrive -NoMedia -Confirm:$false
 
+    Write-Host "starting loop"
+    # Move each VM registered on the snappshotted datastore to the Target Datastore
+    $NewVM | Foreach-Object {
+        Write-Host "Remove any attached CD-ROM"
+        # Remove any CD-ROM drives attached
+        $_ | Get-CDDrive | Set-CDDrive -NoMedia -Confirm:$false | Out-Null
+
+        Write-Host "Updating Network"
         # Attach a specific network - Often networks are disconnected upon registration if previously connected to a VDS
-        $item | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $NetworkPortGroup -Confirm:$false 
+        $_ | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $NetworkPortGroup -Confirm:$false | Out-Null 
 
         # Storage vMotion the VM to the new datastore
-        $item | Move-VM -Datastore $TargetDS
-
+        $_ | Move-VM -Datastore $TargetDS
         # Wait until the VM has been moved to the target datastore
         Do {
-            $VMItem = Get-Datastore  -Name $TargetDS | Get-VM -Name $item -ErrorAction SilentlyContinue
+            $VMItem = Get-Datastore  -Name $TargetDS | Get-VM -Name $_ -ErrorAction SilentlyContinue
         } While (-not $VMItem)
+
+        Start-Sleep -Seconds 5
     }
 }
 
