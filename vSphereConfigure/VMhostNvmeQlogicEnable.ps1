@@ -1,1 +1,1 @@
-(Get-VMHostModule -VMhost (Get-Cluster -name "cluster-jase" | Get-VMhost )).Where{$_.Name -eq "qlnativefc"} | Set-VMHostModule -Options "ql2xnvmesupport=1"
+(Get-VMHostModule -VMhost (Get-Cluster -name "clustername" | Get-VMhost )).Where{$_.Name -eq "qlnativefc"} | Set-VMHostModule -Options "ql2xnvmesupport=1"
