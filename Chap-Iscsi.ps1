@@ -227,14 +227,20 @@ $PureHosts = Get-Pfa2Host | Where-Object {$_.HostGroup.Name -eq $Cluster.Name}
 $PureHosts | Foreach-Object {
     $PureHost = $_
 
-    Write-Host "Updating the ChapHostPassword and ChapTarget Password for FlashArray Host $($PureHost.Name)"
-    Try {
-        Update-Pfa2Host -Array $PURE_AUTH_2_X -Name $PureHost.Name -ChapHostPassword $chaphostpassword -ChapHostUser $PureHost.Iqns.ToString() -ChapTargetPassword $chaptargetpassword -ChapTargetUser $PureHost.Iqns.toString() | Out-Null
-        Write-Host "Successfully updated the ChapHostPassword and/or ChapTargetPassword for FlashArray Host $($_.Name)" -ForegroundColor Green
+    if ($PureHost.Chap.HostUser -ne $null) {
+        Write-Host "Chap is already configured for FlashArray Host $($PureHost.Name)" -NoNewLine
         Write-Host " "
-    } Catch {
-        Write-Host "Could not update the ChapHostPassword and/or ChapTargetPassword for FlashArray Host $($_.Name)" -ForegroundColor Red
-        Write-Host $Error
-        Write-Host " "
+    }
+    else {
+        Write-Host "Updating the ChapHostPassword and ChapTarget Password for FlashArray Host $($PureHost.Name)"
+        Try {
+            Update-Pfa2Host -Array $PURE_AUTH_2_X -Name $PureHost.Name -ChapHostPassword $chaphostpassword -ChapHostUser $($PureHost.Iqns).ToString() -ChapTargetPassword $chaptargetpassword -ChapTargetUser $($PureHost.Iqns).ToString() | Out-Null
+            Write-Host "Successfully updated the ChapHostPassword and/or ChapTargetPassword for FlashArray Host $($_.Name)" -ForegroundColor Green
+            Write-Host " "
+        } Catch {
+            Write-Host "Could not update the ChapHostPassword and/or ChapTargetPassword for FlashArray Host $($_.Name)" -ForegroundColor Red
+            Write-Host $Error
+            Write-Host " "
+        }
     }
 }
